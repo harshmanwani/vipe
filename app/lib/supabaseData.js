@@ -238,4 +238,28 @@ export const filterPosts = async (searchTerm = "", tag = "", status = "") => {
 
 // Available tags and statuses
 export const availableTags = ["goods", "services", "education", "money", "general"];
-export const availableStatuses = ["Available", "Sold", "Pending"]; 
+export const availableStatuses = ["Available", "Pending", "Completed", "Sold"];
+
+// Update post status
+export const updatePostStatus = async (postId, status, username) => {
+  // Check if user can modify this post
+  const canModify = await canModifyPost(username, postId);
+  
+  if (!canModify) {
+    console.error('User not authorized to update this post');
+    return { success: false, error: 'Not authorized' };
+  }
+  
+  // Update the post status
+  const { error } = await supabase
+    .from('posts')
+    .update({ status })
+    .eq('id', postId);
+  
+  if (error) {
+    console.error('Error updating post status:', error);
+    return { success: false, error: error.message };
+  }
+  
+  return { success: true };
+}; 

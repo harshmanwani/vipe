@@ -15,6 +15,7 @@ export default function Signup() {
     username: '',
     password: '',
     discordName: '',
+    apartment: '',
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);

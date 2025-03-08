@@ -11,6 +11,8 @@ const statusBadgeVariants = cva(
           "border-transparent bg-green-500 text-white hover:bg-green-600",
         Pending:
           "border-transparent bg-blue-500 text-white hover:bg-blue-600",
+        Completed:
+          "border-transparent bg-purple-500 text-white hover:bg-purple-600",
         Sold:
           "border-transparent bg-red-500 text-white hover:bg-red-600",
         default:

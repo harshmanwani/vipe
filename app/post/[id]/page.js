@@ -5,11 +5,17 @@ import { useParams, useRouter } from 'next/navigation';
 import Header from '@/app/components/Header';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ThumbsUp, ArrowLeft } from "lucide-react";
-import { getPostById, toggleThumbsUp, hasUserThumbsUp, addComment } from '@/app/lib/supabaseData';
+import { ThumbsUp, ArrowLeft, CheckCircle } from "lucide-react";
+import { getPostById, toggleThumbsUp, hasUserThumbsUp, addComment, updatePostStatus, canModifyPost } from '@/app/lib/supabaseData';
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu";
 
 export default function PostDetail() {
   const params = useParams();
@@ -19,6 +25,8 @@ export default function PostDetail() {
   const [comment, setComment] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [canModify, setCanModify] = useState(false);
+  const [statusUpdateLoading, setStatusUpdateLoading] = useState(false);
 
   useEffect(() => {
     // Get current user from localStorage
@@ -30,6 +38,18 @@ export default function PostDetail() {
     // Fetch post data
     fetchPost();
   }, [params.id]);
+
+  useEffect(() => {
+    // Check if user can modify this post
+    const checkModifyPermission = async () => {
+      if (user && post) {
+        const canModifyResult = await canModifyPost(user.username, post.id);
+        setCanModify(canModifyResult);
+      }
+    };
+    
+    checkModifyPermission();
+  }, [user, post]);
   
   const fetchPost = async () => {
     setLoading(true);
@@ -77,6 +97,27 @@ export default function PostDetail() {
       }
     } catch (err) {
       console.error('Error adding comment:', err);
+    }
+  };
+
+  const handleStatusUpdate = async (newStatus) => {
+    if (!user || !canModify) return;
+    
+    setStatusUpdateLoading(true);
+    try {
+      const result = await updatePostStatus(post.id, newStatus, user.username);
+      
+      if (result.success) {
+        // Refresh post data
+        await fetchPost();
+      } else {
+        setError(result.error || 'Failed to update status');
+      }
+    } catch (err) {
+      console.error('Error updating status:', err);
+      setError('An error occurred while updating status');
+    } finally {
+      setStatusUpdateLoading(false);
     }
   };
 
@@ -167,6 +208,41 @@ export default function PostDetail() {
           <CardHeader>
             <div className="flex justify-between items-start">
               <CardTitle className="text-2xl">{post.title}</CardTitle>
+              
+              {canModify && post.status !== 'Completed' && post.status !== 'Sold' && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      disabled={statusUpdateLoading}
+                    >
+                      Update Status
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    {post.status !== 'Available' && (
+                      <DropdownMenuItem onClick={() => handleStatusUpdate('Available')}>
+                        Mark as Available
+                      </DropdownMenuItem>
+                    )}
+                    {post.status !== 'Pending' && (
+                      <DropdownMenuItem onClick={() => handleStatusUpdate('Pending')}>
+                        Mark as Pending
+                      </DropdownMenuItem>
+                    )}
+                    <DropdownMenuItem onClick={() => handleStatusUpdate('Completed')}>
+                      <CheckCircle className="h-4 w-4 mr-2" />
+                      Mark as Completed
+                    </DropdownMenuItem>
+                    {post.status !== 'Sold' && (
+                      <DropdownMenuItem onClick={() => handleStatusUpdate('Sold')}>
+                        Mark as Sold
+                      </DropdownMenuItem>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
             </div>
             <div className="flex items-center gap-2 mt-2">
               <StatusBadge status={post.status}>
