@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS users (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   username TEXT UNIQUE NOT NULL,
   password TEXT NOT NULL, -- In a production app, you should hash passwords
-  apartment TEXT NOT NULL,
+  discord_name TEXT NOT NULL,
   role TEXT NOT NULL DEFAULT 'user',
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -34,15 +34,15 @@ ALTER TABLE posts DISABLE ROW LEVEL SECURITY;
 -- Insert initial data
 
 -- Admin user
-INSERT INTO users (username, password, apartment, role)
-VALUES ('admin', 'admin123', '1A', 'admin')
+INSERT INTO users (username, password, discord_name, role)
+VALUES ('admin', 'admin123', 'admin#1234', 'admin')
 ON CONFLICT (username) DO NOTHING;
 
 -- Sample users
-INSERT INTO users (username, password, apartment, role)
+INSERT INTO users (username, password, discord_name, role)
 VALUES 
-  ('maria4b', 'password123', '4B', 'user'),
-  ('john12a', 'password123', '12A', 'user')
+  ('maria4b', 'password123', 'maria#5678', 'user'),
+  ('john12a', 'password123', 'john#9012', 'user')
 ON CONFLICT (username) DO NOTHING;
 
 -- Sample posts

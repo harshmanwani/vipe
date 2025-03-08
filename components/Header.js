@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Button } from "@/components/ui/button";
+import { normalizeUserData, getDisplayName } from "@/app/lib/userUtils";
 
 export default function Header() {
   const [user, setUser] = useState(null);
@@ -8,7 +9,8 @@ export default function Header() {
   useEffect(() => {
     const storedUser = localStorage.getItem('currentUser');
     if (storedUser) {
-      setUser(JSON.parse(storedUser));
+      // Normalize user data to ensure both apartment and discord_name are available
+      setUser(normalizeUserData(JSON.parse(storedUser)));
     }
   }, []);
 
@@ -32,7 +34,7 @@ export default function Header() {
                 <Button variant="outline">Create Post</Button>
               </Link>
               <span className="text-sm text-gray-600">
-                {user.username} ({user.apartment})
+                {user.username} <span title="Discord">{getDisplayName(user)}</span>
               </span>
               <Button variant="ghost" onClick={handleLogout}>
                 Logout

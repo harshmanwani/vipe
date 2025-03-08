@@ -14,7 +14,7 @@ export default function Signup() {
   const [formData, setFormData] = useState({
     username: '',
     password: '',
-    apartment: '',
+    discordName: '',
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -94,11 +94,11 @@ export default function Signup() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Apartment Number</label>
+                  <label className="text-sm font-medium">Discord Name</label>
                   <Input
-                    name="apartment"
-                    placeholder="e.g., 4B"
-                    value={formData.apartment}
+                    name="discordName"
+                    placeholder="e.g., username#1234"
+                    value={formData.discordName}
                     onChange={handleChange}
                     required
                     disabled={loading}

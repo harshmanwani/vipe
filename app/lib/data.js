@@ -1,5 +1,7 @@
 "use client";
 
+import { normalizeUserData } from './userUtils';
+
 // In-memory data store
 let posts = [
   {
@@ -57,19 +59,19 @@ let users = [
   {
     username: "admin",
     password: "admin123",
-    apartment: "1A",
+    discord_name: "admin#1234",
     role: "admin",
   },
   {
     username: "maria4b",
     password: "password123",
-    apartment: "4B",
+    discord_name: "maria#5678",
     role: "user",
   },
   {
     username: "john12a",
     password: "password123",
-    apartment: "12A",
+    discord_name: "john#9012",
     role: "user",
   },
 ];
@@ -118,16 +120,18 @@ export const deletePost = (id) => {
 };
 
 export const getUser = (username) => {
-  return users.find((user) => user.username === username);
+  return normalizeUserData(users.find((user) => user.username === username));
 };
 
 export const createUser = (user) => {
   const newUser = {
-    ...user,
+    username: user.username,
+    password: user.password,
+    discord_name: user.discordName,
     role: "user",
   };
   users = [...users, newUser];
-  return newUser;
+  return normalizeUserData(newUser);
 };
 
 // For checking post ownership or admin rights

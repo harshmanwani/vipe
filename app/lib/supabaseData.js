@@ -1,6 +1,7 @@
 "use client";
 
 import { supabase } from './supabase';
+import { normalizeUserData } from './userUtils';
 
 // Posts
 export const getAllPosts = async () => {
@@ -86,7 +87,7 @@ export const getUser = async (username) => {
     return null;
   }
   
-  return data;
+  return normalizeUserData(data);
 };
 
 export const createUser = async (user) => {
@@ -95,7 +96,7 @@ export const createUser = async (user) => {
     .insert([{
       username: user.username,
       password: user.password, // Note: In a production app, you should hash passwords
-      apartment: user.apartment,
+      discord_name: user.discordName,
       role: 'user'
     }])
     .select()
@@ -106,7 +107,7 @@ export const createUser = async (user) => {
     return null;
   }
   
-  return data;
+  return normalizeUserData(data);
 };
 
 // Authorization

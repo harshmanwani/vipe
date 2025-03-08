@@ -149,7 +149,7 @@ export default function Home() {
       <Header />
       <main className="container mx-auto px-4 py-8">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-          <h1 className="text-3xl font-bold">Neighborhood Listings</h1>
+          <h1 className="text-3xl font-bold">Listings</h1>
           {user && (
             <Link href="/create">
               <Button>Create New Listing</Button>
