@@ -7,7 +7,7 @@ import Header from '@/app/components/Header';
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { getUser, createUser, saveToLocalStorage } from '@/app/lib/data';
+import { getUser, createUser } from '@/app/lib/supabaseData';
 
 export default function Signup() {
   const router = useRouter();
@@ -17,19 +17,41 @@ export default function Signup() {
     apartment: '',
   });
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
+    setError('');
     
-    if (getUser(formData.username)) {
-      setError('Username already exists');
-      return;
-    }
+    try {
+      // Check if username already exists
+      const existingUser = await getUser(formData.username);
+      
+      if (existingUser) {
+        setError('Username already exists');
+        return;
+      }
 
-    const newUser = createUser(formData);
-    saveToLocalStorage();
-    localStorage.setItem('currentUser', JSON.stringify(newUser));
-    router.push('/');
+      // Create new user
+      const newUser = await createUser(formData);
+      
+      if (!newUser) {
+        setError('Failed to create user');
+        return;
+      }
+      
+      // Store user in localStorage for client-side access
+      localStorage.setItem('currentUser', JSON.stringify(newUser));
+      
+      // Redirect to home page
+      router.push('/');
+    } catch (err) {
+      console.error('Signup error:', err);
+      setError('An error occurred during signup');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleChange = (e) => {
@@ -40,7 +62,7 @@ export default function Signup() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <Header />
       <main className="container mx-auto px-4 py-8">
         <div className="max-w-md mx-auto">
@@ -57,6 +79,7 @@ export default function Signup() {
                     value={formData.username}
                     onChange={handleChange}
                     required
+                    disabled={loading}
                   />
                 </div>
                 <div className="space-y-2">
@@ -67,6 +90,7 @@ export default function Signup() {
                     value={formData.password}
                     onChange={handleChange}
                     required
+                    disabled={loading}
                   />
                 </div>
                 <div className="space-y-2">
@@ -77,17 +101,18 @@ export default function Signup() {
                     value={formData.apartment}
                     onChange={handleChange}
                     required
+                    disabled={loading}
                   />
                 </div>
                 {error && (
-                  <p className="text-red-500 text-sm">{error}</p>
+                  <p className="text-red-500 dark:text-red-400 text-sm">{error}</p>
                 )}
-                <Button type="submit" className="w-full">
-                  Sign Up
+                <Button type="submit" className="w-full" disabled={loading}>
+                  {loading ? 'Signing up...' : 'Sign Up'}
                 </Button>
-                <p className="text-center text-sm text-gray-600">
+                <p className="text-center text-sm text-muted-foreground">
                   Already have an account?{' '}
-                  <Link href="/login" className="text-blue-600 hover:underline">
+                  <Link href="/login" className="text-primary hover:underline">
                     Login
                   </Link>
                 </p>

@@ -6,8 +6,9 @@ import Header from '@/app/components/Header';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ThumbsUp, ArrowLeft } from "lucide-react";
-import { getPostById, toggleThumbsUp, hasUserThumbsUp, addComment, saveToLocalStorage, loadFromLocalStorage } from '@/app/lib/data';
+import { getPostById, toggleThumbsUp, hasUserThumbsUp, addComment } from '@/app/lib/supabaseData';
 import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
 
 export default function PostDetail() {
   const params = useParams();
@@ -16,59 +17,66 @@ export default function PostDetail() {
   const [user, setUser] = useState(null);
   const [comment, setComment] = useState('');
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    loadFromLocalStorage();
+    // Get current user from localStorage
     const currentUser = localStorage.getItem('currentUser');
     if (currentUser) {
       setUser(JSON.parse(currentUser));
     }
     
-    const fetchedPost = getPostById(params.id);
-    if (fetchedPost) {
-      // Ensure post has the required fields
-      setPost({
-        ...fetchedPost,
-        thumbsUp: fetchedPost.thumbsUp || 0,
-        thumbsUpBy: fetchedPost.thumbsUpBy || [],
-        comments: fetchedPost.comments || []
-      });
-    }
-    setLoading(false);
+    // Fetch post data
+    fetchPost();
   }, [params.id]);
-
-  const handleThumbsUp = () => {
-    if (!user) return; // Only logged in users can thumbs up
-    
-    toggleThumbsUp(post.id, user.username);
-    const updatedPost = getPostById(post.id);
-    // Ensure post has the required fields
-    setPost({
-      ...updatedPost,
-      thumbsUp: updatedPost.thumbsUp || 0,
-      thumbsUpBy: updatedPost.thumbsUpBy || [],
-      comments: updatedPost.comments || []
-    });
+  
+  const fetchPost = async () => {
+    setLoading(true);
+    try {
+      const fetchedPost = await getPostById(params.id);
+      if (fetchedPost) {
+        setPost(fetchedPost);
+      }
+    } catch (err) {
+      console.error('Error fetching post:', err);
+      setError('Failed to load post');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleAddComment = (e) => {
+  const handleThumbsUp = async () => {
+    if (!user) return; // Only logged in users can thumbs up
+    
+    try {
+      const success = await toggleThumbsUp(post.id, user.username);
+      if (success) {
+        // Refresh post data
+        fetchPost();
+      }
+    } catch (err) {
+      console.error('Error toggling thumbs up:', err);
+    }
+  };
+
+  const handleAddComment = async (e) => {
     e.preventDefault();
     if (!user || !comment.trim()) return;
     
-    addComment(post.id, {
-      text: comment,
-      postedBy: user.username
-    });
-    
-    setComment('');
-    const updatedPost = getPostById(post.id);
-    // Ensure post has the required fields
-    setPost({
-      ...updatedPost,
-      thumbsUp: updatedPost.thumbsUp || 0,
-      thumbsUpBy: updatedPost.thumbsUpBy || [],
-      comments: updatedPost.comments || []
-    });
+    try {
+      const newComment = await addComment(post.id, {
+        text: comment,
+        postedBy: user.username
+      });
+      
+      if (newComment) {
+        setComment('');
+        // Refresh post data
+        fetchPost();
+      }
+    } catch (err) {
+      console.error('Error adding comment:', err);
+    }
   };
 
   const formatDate = (dateString) => {
@@ -76,18 +84,53 @@ export default function PostDetail() {
     const now = new Date();
     const diffInSeconds = Math.floor((now - date) / 1000);
 
-    if (diffInSeconds < 60) return 'Just now';
-    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} minutes ago`;
-    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} hours ago`;
-    return `${Math.floor(diffInSeconds / 86400)} days ago`;
+    if (diffInSeconds < 60) {
+      return 'just now';
+    } else if (diffInSeconds < 3600) {
+      const minutes = Math.floor(diffInSeconds / 60);
+      return `${minutes} minute${minutes > 1 ? 's' : ''} ago`;
+    } else if (diffInSeconds < 86400) {
+      const hours = Math.floor(diffInSeconds / 3600);
+      return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+    } else {
+      const days = Math.floor(diffInSeconds / 86400);
+      return `${days} day${days > 1 ? 's' : ''} ago`;
+    }
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-background">
         <Header />
         <main className="container mx-auto px-4 py-8">
-          <p>Loading...</p>
+          <Button variant="ghost" onClick={() => router.push('/')} className="mb-4">
+            <ArrowLeft className="h-4 w-4 mr-2" /> Back to listings
+          </Button>
+          <div className="text-center py-8">
+            <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]" role="status">
+              <span className="!absolute !-m-px !h-px !w-px !overflow-hidden !whitespace-nowrap !border-0 !p-0 ![clip:rect(0,0,0,0)]">Loading...</span>
+            </div>
+            <p className="mt-2 text-muted-foreground">Loading post...</p>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <main className="container mx-auto px-4 py-8">
+          <Button variant="ghost" onClick={() => router.push('/')} className="mb-4">
+            <ArrowLeft className="h-4 w-4 mr-2" /> Back to listings
+          </Button>
+          <div className="p-4 bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-200 rounded-lg">
+            {error}
+            <Button variant="link" className="ml-2 p-0 h-auto" onClick={fetchPost}>
+              Try Again
+            </Button>
+          </div>
         </main>
       </div>
     );
@@ -95,20 +138,24 @@ export default function PostDetail() {
 
   if (!post) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-background">
         <Header />
         <main className="container mx-auto px-4 py-8">
           <Button variant="ghost" onClick={() => router.push('/')} className="mb-4">
             <ArrowLeft className="h-4 w-4 mr-2" /> Back to listings
           </Button>
-          <p>Post not found</p>
+          <Card>
+            <CardContent className="pt-6">
+              <p className="text-center text-muted-foreground">Post not found</p>
+            </CardContent>
+          </Card>
         </main>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <Header />
       <main className="container mx-auto px-4 py-8">
         <Button variant="ghost" onClick={() => router.push('/')} className="mb-4">
@@ -119,63 +166,65 @@ export default function PostDetail() {
           <CardHeader>
             <div className="flex justify-between items-start">
               <CardTitle className="text-2xl">{post.title}</CardTitle>
-              <div className={`px-2 py-1 rounded-full text-xs ${
-                post.status === 'Available' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-              }`}>
+            </div>
+            <div className="flex items-center gap-2 mt-2">
+              <Badge variant={post.status === 'Available' ? 'default' : post.status === 'Pending' ? 'outline' : 'secondary'}>
                 {post.status}
-              </div>
+              </Badge>
+              <Badge variant="outline">{post.type}</Badge>
+              {post.tag && (
+                <Badge variant="outline" className="capitalize">
+                  {post.tag}
+                </Badge>
+              )}
             </div>
           </CardHeader>
           <CardContent>
-            <p className="text-gray-600 mb-4">{post.description}</p>
-            <div className="grid grid-cols-2 gap-4 mb-4">
+            <p className="text-muted-foreground mb-4">{post.description}</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
               {post.price && (
                 <div>
-                  <p className="text-sm text-gray-500">Price</p>
+                  <p className="text-sm text-muted-foreground">Price</p>
                   <p className="font-semibold">${post.price}</p>
                 </div>
               )}
               {post.time && (
                 <div>
-                  <p className="text-sm text-gray-500">Time</p>
+                  <p className="text-sm text-muted-foreground">Time</p>
                   <p className="font-semibold">{post.time}</p>
                 </div>
               )}
               <div>
-                <p className="text-sm text-gray-500">Posted by</p>
-                <p className="font-semibold">{post.postedBy}</p>
+                <p className="text-sm text-muted-foreground">Posted by</p>
+                <p className="font-semibold">{post.posted_by}</p>
               </div>
               <div>
-                <p className="text-sm text-gray-500">Posted</p>
-                <p className="font-semibold">{formatDate(post.createdAt)}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">Category</p>
-                <p className="font-semibold capitalize">{post.tag}</p>
+                <p className="text-sm text-muted-foreground">Posted</p>
+                <p className="font-semibold">{formatDate(post.created_at)}</p>
               </div>
             </div>
             
             <div className="flex items-center mt-6">
               <Button 
-                variant={user && hasUserThumbsUp(post.id, user.username) ? "default" : "outline"}
+                variant={user && hasUserThumbsUp(post, user.username) ? "default" : "outline"}
                 size="sm" 
                 onClick={handleThumbsUp}
                 disabled={!user}
                 className="mr-2"
               >
                 <ThumbsUp className="h-4 w-4 mr-2" />
-                {user && hasUserThumbsUp(post.id, user.username) ? "Interested" : "I'm interested"}
-                <span className="ml-2 bg-gray-100 text-gray-800 px-2 py-0.5 rounded-full text-xs">
-                  {post.thumbsUp}
+                {user && hasUserThumbsUp(post, user.username) ? "Interested" : "I'm interested"}
+                <span className="ml-2 bg-background text-foreground px-2 py-0.5 rounded-full text-xs">
+                  {post.thumbs_up || 0}
                 </span>
               </Button>
-              {!user && <p className="text-sm text-gray-500 ml-2">Login to show interest</p>}
+              {!user && <p className="text-sm text-muted-foreground ml-2">Login to show interest</p>}
             </div>
           </CardContent>
         </Card>
         
         <div className="mb-8">
-          <h2 className="text-xl font-bold mb-4">Comments ({post.comments.length})</h2>
+          <h2 className="text-xl font-bold mb-4">Comments ({post.comments?.length || 0})</h2>
           
           {user ? (
             <form onSubmit={handleAddComment} className="mb-6">
@@ -190,17 +239,17 @@ export default function PostDetail() {
               </Button>
             </form>
           ) : (
-            <p className="text-sm text-gray-500 mb-6">Login to leave a comment</p>
+            <p className="text-sm text-muted-foreground mb-6">Login to leave a comment</p>
           )}
           
-          {post.comments.length > 0 ? (
+          {post.comments && post.comments.length > 0 ? (
             <div className="space-y-4">
               {post.comments.map((comment) => (
                 <Card key={comment.id}>
                   <CardContent className="pt-4">
                     <div className="flex justify-between items-start mb-2">
-                      <p className="font-semibold">{comment.postedBy}</p>
-                      <p className="text-xs text-gray-500">{formatDate(comment.createdAt)}</p>
+                      <p className="font-semibold">{comment.posted_by}</p>
+                      <p className="text-xs text-muted-foreground">{formatDate(comment.created_at)}</p>
                     </div>
                     <p>{comment.text}</p>
                   </CardContent>
@@ -208,7 +257,7 @@ export default function PostDetail() {
               ))}
             </div>
           ) : (
-            <p className="text-gray-500">No comments yet</p>
+            <p className="text-muted-foreground">No comments yet</p>
           )}
         </div>
       </main>

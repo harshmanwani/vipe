@@ -7,7 +7,8 @@ import Header from '@/app/components/Header';
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { getUser } from '@/app/lib/data';
+import { getUser } from '@/app/lib/supabaseData';
+import { supabase } from '@/app/lib/supabase';
 
 export default function Login() {
   const router = useRouter();
@@ -16,16 +17,31 @@ export default function Login() {
     password: '',
   });
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const user = getUser(formData.username);
+    setLoading(true);
+    setError('');
     
-    if (user && user.password === formData.password) {
-      localStorage.setItem('currentUser', JSON.stringify(user));
-      router.push('/');
-    } else {
-      setError('Invalid username or password');
+    try {
+      const user = await getUser(formData.username);
+      
+      if (user && user.password === formData.password) {
+        // Store user in localStorage for client-side access
+        localStorage.setItem('currentUser', JSON.stringify(user));
+        
+        // In a production app, you would use Supabase Auth instead of this approach
+        // This is a simplified version that mimics the current behavior
+        router.push('/');
+      } else {
+        setError('Invalid username or password');
+      }
+    } catch (err) {
+      console.error('Login error:', err);
+      setError('An error occurred during login');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -37,7 +53,7 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <Header />
       <main className="container mx-auto px-4 py-8">
         <div className="max-w-md mx-auto">
@@ -54,6 +70,7 @@ export default function Login() {
                     value={formData.username}
                     onChange={handleChange}
                     required
+                    disabled={loading}
                   />
                 </div>
                 <div className="space-y-2">
@@ -64,17 +81,18 @@ export default function Login() {
                     value={formData.password}
                     onChange={handleChange}
                     required
+                    disabled={loading}
                   />
                 </div>
                 {error && (
-                  <p className="text-red-500 text-sm">{error}</p>
+                  <p className="text-red-500 dark:text-red-400 text-sm">{error}</p>
                 )}
-                <Button type="submit" className="w-full">
-                  Login
+                <Button type="submit" className="w-full" disabled={loading}>
+                  {loading ? 'Logging in...' : 'Login'}
                 </Button>
-                <p className="text-center text-sm text-gray-600">
+                <p className="text-center text-sm text-muted-foreground">
                   Don't have an account?{' '}
-                  <Link href="/signup" className="text-blue-600 hover:underline">
+                  <Link href="/signup" className="text-primary hover:underline">
                     Sign up
                   </Link>
                 </p>

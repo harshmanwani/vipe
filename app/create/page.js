@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
-import { createPost, saveToLocalStorage, availableTags } from '@/app/lib/data';
+import { createPost, availableTags } from '@/app/lib/supabaseData';
 
 export default function CreatePost() {
   const router = useRouter();
@@ -21,6 +21,8 @@ export default function CreatePost() {
     time: '',
     tag: 'general',
   });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     const currentUser = localStorage.getItem('currentUser');
@@ -31,17 +33,30 @@ export default function CreatePost() {
     }
   }, []);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
+    setError('');
     
-    const post = {
-      ...formData,
-      postedBy: user.username,
-    };
-    
-    createPost(post);
-    saveToLocalStorage();
-    router.push('/');
+    try {
+      const post = {
+        ...formData,
+        postedBy: user.username,
+      };
+      
+      const newPost = await createPost(post);
+      
+      if (newPost) {
+        router.push('/');
+      } else {
+        setError('Failed to create post');
+      }
+    } catch (err) {
+      console.error('Error creating post:', err);
+      setError('An error occurred while creating the post');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleChange = (e) => {
@@ -72,7 +87,7 @@ export default function CreatePost() {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <Header />
       <main className="container mx-auto px-4 py-8">
         <div className="max-w-md mx-auto">
@@ -81,6 +96,12 @@ export default function CreatePost() {
               <CardTitle className="text-2xl text-center">Create Post</CardTitle>
             </CardHeader>
             <CardContent>
+              {error && (
+                <div className="mb-4 p-3 bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-200 rounded-lg text-sm">
+                  {error}
+                </div>
+              )}
+              
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Title</label>
@@ -90,6 +111,7 @@ export default function CreatePost() {
                     onChange={handleChange}
                     required
                     maxLength={50}
+                    disabled={loading}
                   />
                 </div>
                 
@@ -98,6 +120,7 @@ export default function CreatePost() {
                   <Select
                     value={formData.type}
                     onValueChange={handleTypeChange}
+                    disabled={loading}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select type" />
@@ -114,6 +137,7 @@ export default function CreatePost() {
                   <Select
                     value={formData.tag}
                     onValueChange={handleTagChange}
+                    disabled={loading}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select category" />
@@ -137,6 +161,7 @@ export default function CreatePost() {
                     required
                     maxLength={100}
                     placeholder="Max 100 characters"
+                    disabled={loading}
                   />
                 </div>
 
@@ -151,6 +176,7 @@ export default function CreatePost() {
                       value={formData.price}
                       onChange={handleChange}
                       required
+                      disabled={loading}
                     />
                   </div>
                 )}
@@ -164,11 +190,12 @@ export default function CreatePost() {
                       value={formData.time}
                       onChange={handleChange}
                       required
+                      disabled={loading}
                     />
                   </div>
                 )}
 
-                <div className="text-sm text-gray-500 mt-4">
+                <div className="text-sm text-muted-foreground mt-4">
                   <p>After creating your post:</p>
                   <ul className="list-disc pl-5 mt-2">
                     <li>People can view your post details</li>
@@ -177,8 +204,8 @@ export default function CreatePost() {
                   </ul>
                 </div>
 
-                <Button type="submit" className="w-full">
-                  Create Post
+                <Button type="submit" className="w-full" disabled={loading}>
+                  {loading ? 'Creating...' : 'Create Post'}
                 </Button>
               </form>
             </CardContent>

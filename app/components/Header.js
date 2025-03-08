@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 export default function Header() {
   const [user, setUser] = useState(null);
@@ -21,19 +22,21 @@ export default function Header() {
   };
 
   return (
-    <header className="border-b">
+    <header className="border-b bg-background">
       <div className="container mx-auto px-4 py-4 flex items-center justify-between">
         <Link href="/" className="text-2xl font-bold">
-          NS List
+          Vipe
         </Link>
         
         <nav className="flex items-center gap-4">
+          <ThemeToggle />
+          
           {user ? (
             <>
               <Link href="/create">
                 <Button variant="outline">Create Post</Button>
               </Link>
-              <span className="text-sm text-gray-600">
+              <span className="text-sm text-muted-foreground">
                 {user.username} ({user.apartment})
               </span>
               <Button variant="ghost" onClick={handleLogout}>

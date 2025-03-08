@@ -1,36 +1,93 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Neighborhood Listings App
+
+A community marketplace application for neighborhood listings, built with Next.js and Supabase.
+
+## Features
+
+- User authentication (signup, login)
+- Create, view, and delete listings
+- Show interest in listings with thumbs up
+- Comment on listings
+- Filter listings by category, status, and search term
+- Responsive design for mobile and desktop
+
+## Tech Stack
+
+- [Next.js 15](https://nextjs.org/) - React framework
+- [Supabase](https://supabase.io/) - Backend as a Service (BaaS)
+- [Tailwind CSS](https://tailwindcss.com/) - Utility-first CSS framework
+- [Radix UI](https://www.radix-ui.com/) - Unstyled, accessible UI components
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- Node.js 18.17 or later
+- npm or yarn
+- Supabase account
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Setting up Supabase
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+1. Create a new Supabase project at [supabase.com](https://supabase.com/)
+2. After creating your project, go to Project Settings > API to get your project URL and anon key
+3. Run the SQL script in `scripts/setup-supabase.sql` in the Supabase SQL Editor to set up the database schema and initial data
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Installation
 
-## Learn More
+1. Clone the repository
+   ```bash
+   git clone https://github.com/yourusername/neighborhood-listings.git
+   cd neighborhood-listings
+   ```
 
-To learn more about Next.js, take a look at the following resources:
+2. Install dependencies
+   ```bash
+   npm install
+   # or
+   yarn install
+   ```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+3. Create a `.env.local` file in the root directory with your Supabase credentials
+   ```
+   NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+   ```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+4. Run the development server
+   ```bash
+   npm run dev
+   # or
+   yarn dev
+   ```
 
-## Deploy on Vercel
+5. Open [http://localhost:3000](http://localhost:3000) in your browser
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Deployment
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+The application can be deployed to Vercel or any other hosting platform that supports Next.js.
+
+1. Push your code to a GitHub repository
+2. Connect your repository to Vercel
+3. Add your environment variables in the Vercel dashboard
+4. Deploy
+
+## Project Structure
+
+- `app/` - Next.js app directory
+  - `components/` - Reusable UI components
+  - `lib/` - Utility functions and data handling
+    - `supabase.js` - Supabase client configuration
+    - `supabaseData.js` - Data handling functions for Supabase
+  - `api/` - API routes
+  - `login/`, `signup/`, `create/`, `post/` - Page components
+- `components/` - Shared UI components
+- `scripts/` - Database setup scripts
+- `public/` - Static assets
+
+## Authentication
+
+The application uses a simple username/password authentication system. In a production environment, you should use Supabase Auth with proper password hashing and security measures.
+
+## License
+
+This project is licensed under the MIT License.
