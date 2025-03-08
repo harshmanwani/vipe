@@ -19,6 +19,8 @@ import Link from 'next/link';
 import { Input } from "@/components/ui/input";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { StatusSelectItem } from "@/components/ui/status-select-item";
 
 export default function Home() {
   const [posts, setPosts] = useState([]);
@@ -196,7 +198,9 @@ export default function Home() {
                 <SelectContent>
                   <SelectItem value="all">All Statuses</SelectItem>
                   {availableStatuses.map(status => (
-                    <SelectItem key={status} value={status}>{status}</SelectItem>
+                    <StatusSelectItem key={status} value={status} status={status}>
+                      {status}
+                    </StatusSelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -259,9 +263,9 @@ export default function Home() {
                       )}
                     </div>
                     <div className="flex items-center gap-2 mt-1">
-                      <Badge variant={post.status === 'Available' ? 'default' : post.status === 'Pending' ? 'outline' : 'secondary'}>
+                      <StatusBadge status={post.status}>
                         {post.status}
-                      </Badge>
+                      </StatusBadge>
                       <Badge variant="outline">{post.type}</Badge>
                       {post.tag && (
                         <Badge variant="outline" className="capitalize">

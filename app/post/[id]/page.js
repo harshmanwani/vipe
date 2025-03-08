@@ -9,6 +9,7 @@ import { ThumbsUp, ArrowLeft } from "lucide-react";
 import { getPostById, toggleThumbsUp, hasUserThumbsUp, addComment } from '@/app/lib/supabaseData';
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/ui/status-badge";
 
 export default function PostDetail() {
   const params = useParams();
@@ -168,9 +169,9 @@ export default function PostDetail() {
               <CardTitle className="text-2xl">{post.title}</CardTitle>
             </div>
             <div className="flex items-center gap-2 mt-2">
-              <Badge variant={post.status === 'Available' ? 'default' : post.status === 'Pending' ? 'outline' : 'secondary'}>
+              <StatusBadge status={post.status}>
                 {post.status}
-              </Badge>
+              </StatusBadge>
               <Badge variant="outline">{post.type}</Badge>
               {post.tag && (
                 <Badge variant="outline" className="capitalize">
